@@ -84,6 +84,17 @@ h1{
 .header-right{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
 .status-line{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-faint); text-align:right; }
 .status-line b{ color:var(--ink-dim); font-weight:500;}
+.update-date-line{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11.5px;
+  color:var(--ink-dim);
+  text-align:right;
+  padding:6px 12px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--panel-2);
+}
+.update-date-line b{ color:var(--ink); font-weight:600;}
 
 /* ---------- KPI cards ---------- */
 .kpi-row{
@@ -322,6 +333,7 @@ footer a{ color:var(--ink-faint); }
   header{ align-items:flex-start; padding-bottom:18px; margin-bottom:20px; gap:12px; }
   .header-right{ align-items:flex-start; width:100%; }
   .status-line{ text-align:left; }
+  .update-date-line{ text-align:left; width:100%; }
   .brand-logo{ height:32px; margin-bottom:12px; }
   .subtitle{ font-size:12.5px; max-width:100%; }
   .kpi-row{ gap:20px; margin-bottom:24px; }
@@ -352,6 +364,7 @@ footer a{ color:var(--ink-faint); }
     </div>
     <div class="header-right">
       <div class="status-line" id="status-line">Cargando…</div>
+      <div class="update-date-line" id="update-date-line" style="display:none;"></div>
     </div>
   </header>
 
@@ -528,6 +541,17 @@ function categorize(row) {
 
 function processCSV(csvText) {
   const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+
+  // La celda AD1 (columna 30, índice 0-based 29) contiene la fecha en que
+  // se actualizó la data en el Google Sheet. Papa Parse toma la fila 1
+  // como encabezados, así que ese valor queda disponible en meta.fields.
+  let updateDate = "";
+  const fields = parsed.meta && parsed.meta.fields;
+  if (fields && fields.length > 29) {
+    const raw = (fields[29] || "").trim();
+    if (raw && !/^unnamed/i.test(raw)) updateDate = raw;
+  }
+
   const rows = parsed.data
     .filter(r => r["Orden Compra"] && r["Orden Compra"].trim() !== "")
     .map(r => {
@@ -559,13 +583,14 @@ function processCSV(csvText) {
         category: categorize(r),
       };
     });
-  return rows;
+  return { rows, updateDate };
 }
 
 async function loadData() {
   const statusLine = document.getElementById("status-line");
+  const updateDateLine = document.getElementById("update-date-line");
 
-  let rows = null;
+  let result = null;
   let source = "cache";
 
   try {
@@ -573,26 +598,33 @@ async function loadData() {
     if (!res.ok) throw new Error("HTTP " + res.status);
     const text = await res.text();
     if (text && text.length > 100) {
-      rows = processCSV(text);
+      result = processCSV(text);
       source = "live";
     }
   } catch (e) {
-    rows = null;
+    result = null;
   }
 
-  if (!rows) {
+  if (!result) {
     try {
-      rows = processCSV(FALLBACK_CSV);
+      result = processCSV(FALLBACK_CSV);
       source = "fallback";
     } catch (e) {
-      rows = [];
+      result = { rows: [], updateDate: "" };
       source = "error";
     }
   }
 
-  RAW_ROWS = rows;
-  populateFilterOptions(rows);
+  RAW_ROWS = result.rows;
+  populateFilterOptions(RAW_ROWS);
   applyFilters();
+
+  if (result.updateDate) {
+    updateDateLine.innerHTML = `<b>Fecha en que se actualizó la data:</b> ${escapeHtml(result.updateDate)}`;
+    updateDateLine.style.display = "block";
+  } else {
+    updateDateLine.style.display = "none";
+  }
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
