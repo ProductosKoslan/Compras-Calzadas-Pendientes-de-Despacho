@@ -324,6 +324,81 @@ tbody tr:last-child td{ border-bottom:none; }
 .empty-state{ padding:60px 20px; text-align:center; color:var(--ink-faint); font-size:13px; }
 .row-count{ padding:12px 16px; font-size:11.5px; color:var(--ink-faint); font-family:'IBM Plex Mono', monospace; border-top:1px solid var(--line); }
 
+/* ---------- Ranking ---------- */
+.ranking-panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:20px 22px 10px;
+  margin-top:20px;
+  box-shadow:0 1px 3px rgba(22,27,44,0.04);
+}
+.ranking-header{ margin-bottom:16px; }
+.ranking-subtitle{ font-size:12px; color:var(--ink-dim); margin-top:4px; max-width:640px; line-height:1.5; }
+.rank-row{
+  display:grid;
+  grid-template-columns: 30px 108px 1fr 220px;
+  align-items:center;
+  gap:14px;
+  padding:10px 4px;
+  border-bottom:1px solid var(--line-soft);
+}
+.rank-row:last-child{ border-bottom:none; }
+.rank-num{
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:700;
+  font-size:14px;
+  color:var(--ink-faint);
+  text-align:center;
+}
+.rank-num.top3{ color:var(--ink); }
+.rank-info{ min-width:0; }
+.rank-info .primary{
+  font-size:13px;
+  font-weight:600;
+  color:var(--ink);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.rank-info .secondary{
+  font-size:11.5px;
+  color:var(--ink-dim);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin-top:2px;
+}
+.rank-meta{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  color:var(--ink-faint);
+}
+.rank-bar-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:5px;
+}
+.rank-amount{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:13px;
+}
+.rank-bar-track{ width:100%; height:6px; border-radius:4px; background:var(--bg-grid); overflow:hidden; }
+.rank-bar-fill{ height:100%; border-radius:4px; }
+.ranking-empty{ padding:30px 4px; text-align:center; color:var(--ink-faint); font-size:12.5px; }
+@media (max-width: 640px){
+  .rank-row{ grid-template-columns: 24px 1fr; grid-template-areas: "num info" "num amount"; }
+  .rank-num{ grid-area:num; }
+  .rank-info{ grid-area:info; }
+  .rank-bar-wrap{ grid-area:amount; align-items:flex-start; margin-left:38px; }
+  .rank-meta{ display:none; }
+}
+
 footer{
   margin-top:28px;
   padding-top:18px;
@@ -422,6 +497,14 @@ footer a{ color:var(--ink-faint); }
       </table>
     </div>
     <div class="row-count" id="row-count"></div>
+  </section>
+
+  <section class="ranking-panel">
+    <div class="ranking-header">
+      <div class="aging-title">Ranking — Mayor monto en stock</div>
+      <p class="ranking-subtitle">Líneas con stock físico en bodega (Stock &gt; 0), ordenadas por monto USD — lo más crítico en términos de capital inmovilizado.</p>
+    </div>
+    <div id="ranking-list"></div>
   </section>
 
   <footer>
@@ -570,6 +653,10 @@ function categorize(row) {
 
 function processCSV(csvText) {
   const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+  // Parseo posicional en paralelo: nos permite leer columnas por índice de
+  // columna (letra) sin depender de que tengan un nombre de encabezado.
+  const rawParsed = Papa.parse(csvText, { header: false, skipEmptyLines: true });
+  const rawDataRows = rawParsed.data.slice(1); // fila 0 = encabezados
 
   // La celda AD1 (columna 30, índice 0-based 29) contiene la fecha en que
   // se actualizó la data en el Google Sheet. Papa Parse toma la fila 1
@@ -581,14 +668,16 @@ function processCSV(csvText) {
     if (raw && !/^unnamed/i.test(raw)) updateDate = raw;
   }
 
+  const COL_AA = 26; // columna AA (0-based): monto total de la línea en USD
+
   const rows = parsed.data
-    .filter(r => r["Orden Compra"] && r["Orden Compra"].trim() !== "")
-    .map(r => {
+    .map((r, idx) => ({ r, raw: rawDataRows[idx] || [] }))
+    .filter(({ r }) => r["Orden Compra"] && r["Orden Compra"].trim() !== "")
+    .map(({ r, raw }) => {
       const stock = parseCLNumber(r["Stock"]);
       const cantLib = parseCLNumber(r["Cant_Lib"]);
       const dias = parseInt(r["Días en stock"], 10) || 0;
-      const costo = parseCLNumber(r["Costo Compras"]);
-      const moneda = (r["Moneda"] || "").trim().toUpperCase();
+      const montoUSD = parseCLNumber(raw[COL_AA]);
       return {
         linea: r["Línea"],
         oc: r["Orden Compra"],
@@ -599,8 +688,7 @@ function processCSV(csvText) {
         ov: r["Proyecto Cab"],
         stock: stock,
         cantLib: cantLib,
-        costo: costo,
-        moneda: moneda === "USD" ? "USD" : moneda,
+        montoUSD: montoUSD,
         fechaOV: r["Fecha OV"],
         fechaDespachoProv: r["Fecha Despacho Proveedor"],
         fechaRecepcion: r["Fecha Costeo (recepción)"],
@@ -700,16 +788,7 @@ function renderKPIs(rows) {
     const items = rows.filter(r => r.category === cat.key);
     const unitsSum = items.reduce((a, r) => a + r.cantLib, 0);
     const ovCount = new Set(items.map(r => r.ov).filter(Boolean)).size;
-    const byCurrency = {};
-    items.forEach(r => {
-      if (!r.moneda) return;
-      byCurrency[r.moneda] = (byCurrency[r.moneda] || 0) + r.costo;
-    });
-    const currencyLines = Object.entries(byCurrency)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 2)
-      .map(([cur, val]) => `<span class="curr">${cur} ${fmtMoney(val)}</span>`)
-      .join("");
+    const montoSum = items.reduce((a, r) => a + r.montoUSD, 0);
 
     const el = document.createElement("div");
     el.className = "kpi" + (ACTIVE_CATEGORY === cat.key ? " active" : "");
@@ -726,7 +805,7 @@ function renderKPIs(rows) {
         <div class="kpi-label">${cat.label}</div>
         <div class="kpi-sub">
           <span>${ovCount} OV${ovCount === 1 ? "" : "s"} · ${unitsSum.toLocaleString("es-CL")} unid.</span>
-          ${currencyLines}
+          <span class="curr">USD ${fmtMoney(montoSum)}</span>
         </div>
       </div>
     `;
@@ -790,7 +869,7 @@ const COLUMNS = [
   { key: "via", label: "Vía", sortable: true },
   { key: "stock", label: "Stock", sortable: true },
   { key: "dias", label: "Días", sortable: true },
-  { key: "costo", label: "Costo", sortable: true },
+  { key: "montoUSD", label: "Monto USD", sortable: true },
   { key: "comentario", label: "Comentario", sortable: false },
 ];
 
@@ -854,12 +933,47 @@ function renderTable(rows) {
       <td class="mono">${escapeHtml(r.via || "—")}</td>
       <td class="mono">${r.stock.toLocaleString("es-CL")}</td>
       <td class="dias-cell" style="color:${cat.color}">${r.dias}</td>
-      <td class="mono">${r.moneda ? r.moneda + " " + fmtMoney(r.costo) : "—"}</td>
+      <td class="mono">USD ${fmtMoney(r.montoUSD)}</td>
       <td class="desc-cell">${escapeHtml(r.comentario || "")}</td>
     </tr>`;
   }).join("");
 
   countEl.textContent = `${sorted.length} de ${RAW_ROWS.length} líneas`;
+}
+
+function renderRanking(rows) {
+  const container = document.getElementById("ranking-list");
+  const withStock = rows.filter(r => r.stock > 0 && r.montoUSD > 0);
+  const top = [...withStock].sort((a, b) => b.montoUSD - a.montoUSD).slice(0, 10);
+
+  if (top.length === 0) {
+    container.innerHTML = `<div class="ranking-empty">No hay líneas con stock físico y monto registrado.</div>`;
+    return;
+  }
+
+  const maxMonto = top[0].montoUSD || 1;
+
+  container.innerHTML = top.map((r, i) => {
+    const cat = catInfo(r.category);
+    const pct = Math.max((r.montoUSD / maxMonto) * 100, 3);
+    const rank = i + 1;
+    return `
+      <div class="rank-row">
+        <div class="rank-num${rank <= 3 ? " top3" : ""}">${rank}</div>
+        <div class="rank-meta">
+          <span class="badge" style="background:${cat.bg};color:${cat.color}"><span class="dot" style="background:${cat.color}"></span>${r.dias}d</span>
+        </div>
+        <div class="rank-info">
+          <div class="primary">${escapeHtml(r.ov || "—")} · ${escapeHtml(r.cliente || "Sin cliente")}</div>
+          <div class="secondary">${escapeHtml(r.articulo || "")} — ${escapeHtml(r.descripcion || "")} · Stock: ${r.stock.toLocaleString("es-CL")}</div>
+        </div>
+        <div class="rank-bar-wrap">
+          <div class="rank-amount" style="color:${cat.color}">USD ${fmtMoney(r.montoUSD)}</div>
+          <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%;background:${cat.color}"></div></div>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 function applyFilters() {
@@ -868,6 +982,7 @@ function applyFilters() {
   renderKPIs(RAW_ROWS);
   renderAgingBar(RAW_ROWS);
   renderTable(filtered);
+  renderRanking(RAW_ROWS);
   document.querySelectorAll(".kpi").forEach((el, i) => {
     el.classList.toggle("active", ACTIVE_CATEGORY === CATEGORIES[i].key);
   });
@@ -927,8 +1042,7 @@ async function exportToExcel() {
       { header: "Stock", key: "stock", width: 9 },
       { header: "Cant_Lib", key: "cantLib", width: 9 },
       { header: "Días en stock", key: "dias", width: 12 },
-      { header: "Moneda", key: "moneda", width: 8 },
-      { header: "Costo Compras", key: "costo", width: 14 },
+      { header: "Monto USD", key: "montoUSD", width: 15 },
       { header: "Comentario", key: "comentario", width: 34 },
     ];
     sheet.columns = columns;
@@ -947,8 +1061,7 @@ async function exportToExcel() {
         stock: r.stock,
         cantLib: r.cantLib,
         dias: r.dias,
-        moneda: r.moneda || "",
-        costo: r.costo,
+        montoUSD: r.montoUSD,
         comentario: r.comentario || "",
       });
     });
@@ -977,6 +1090,9 @@ async function exportToExcel() {
       const diasCell = row.getCell(12);
       diasCell.font = { bold: true, color: { argb: "FF" + cat.hex } };
 
+      const montoCell = row.getCell(13);
+      montoCell.font = { bold: true, color: { argb: "FF" + cat.hex } };
+
       row.eachCell({ includeEmpty: true }, cell => {
         cell.border = { bottom: { style: "thin", color: { argb: "FFEDF0F6" } } };
         cell.alignment = { vertical: "middle", wrapText: false };
@@ -985,7 +1101,7 @@ async function exportToExcel() {
       row.getCell(10).numFmt = "#,##0";
       row.getCell(11).numFmt = "#,##0";
       row.getCell(12).numFmt = "#,##0";
-      row.getCell(14).numFmt = "#,##0.00";
+      row.getCell(13).numFmt = '"US$" #,##0.00';
     });
 
     sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: columns.length } };
@@ -1025,8 +1141,7 @@ function exportToExcelPlain(filename) {
     "Stock": r.stock,
     "Cant_Lib": r.cantLib,
     "Días en stock": r.dias,
-    "Moneda": r.moneda || "",
-    "Costo Compras": r.costo,
+    "Monto USD": r.montoUSD,
     "Comentario": r.comentario || "",
   }));
 
@@ -1034,7 +1149,7 @@ function exportToExcelPlain(filename) {
   ws["!cols"] = [
     { wch: 26 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 14 },
     { wch: 40 }, { wch: 24 }, { wch: 24 }, { wch: 10 }, { wch: 9 },
-    { wch: 9 }, { wch: 10 }, { wch: 8 }, { wch: 13 }, { wch: 30 },
+    { wch: 9 }, { wch: 10 }, { wch: 13 }, { wch: 30 },
   ];
 
   const wb = XLSX.utils.book_new();
