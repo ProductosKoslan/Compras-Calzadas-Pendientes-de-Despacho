@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
 :root{
   --bg: #FFFFFF;
@@ -248,6 +250,27 @@ select{
 .chip.active{ background:var(--c-transit-bg); border-color:var(--c-transit); color:var(--ink); }
 #clear-filters{ font-size:11.5px; color:var(--ink-faint); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
 
+#export-btn{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11.5px;
+  letter-spacing:0.03em;
+  background:var(--c-fresh-bg);
+  color:var(--c-fresh);
+  border:1px solid var(--c-fresh);
+  padding:10px 16px;
+  border-radius:7px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  transition: background .15s, transform .15s;
+  white-space:nowrap;
+}
+#export-btn:hover{ background:var(--c-fresh); color:#fff; transform:translateY(-1px); }
+#export-btn svg{ width:14px; height:14px; }
+#export-btn:disabled{ opacity:0.4; cursor:not-allowed; transform:none; background:var(--c-fresh-bg); color:var(--c-fresh); }
+
 /* ---------- Table ---------- */
 .table-panel{
   background:var(--panel);
@@ -342,6 +365,7 @@ footer a{ color:var(--ink-faint); }
   #search{ flex-basis:100%; font-size:16px; padding:11px 14px; }
   select{ flex:1; min-width:0; font-size:15px; padding:10px 10px; }
   #clear-filters{ flex-basis:100%; text-align:right; }
+  #export-btn{ flex-basis:100%; justify-content:center; padding:12px 16px; }
   thead th{ font-size:10px; padding:10px 12px; }
   tbody td{ font-size:12px; padding:10px 12px; }
   .scroll-hint{ display:block; }
@@ -381,6 +405,10 @@ footer a{ color:var(--ink-faint); }
     <select id="vendedor-filter" onchange="applyFilters()"><option value="">Todos los vendedores</option></select>
     <select id="proveedor-filter" onchange="applyFilters()"><option value="">Todos los proveedores</option></select>
     <span id="clear-filters" onclick="clearFilters()">Limpiar filtros</span>
+    <button id="export-btn" onclick="exportToExcel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <span id="export-label">Exportar a Excel</span>
+    </button>
   </section>
 
   <section class="table-panel">
@@ -504,15 +532,16 @@ const FALLBACK_CSV = `Línea,Orden Compra,Numero articulo,Descripción,Proveedor
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSmIrJrxxnPPATNJ5pQ20xccU_WmooYxT2yK88u6sIIuJOm6ApHbSns88bR7hetVvGmp_OUOsuG1osY/pub?gid=779634934&single=true&output=csv";
 
 const CATEGORIES = [
-  { key: "transit", label: "En tránsito",       flagCol: "En tránsito",              color: "var(--c-transit)", bg: "var(--c-transit-bg)" },
-  { key: "fresh",   label: "Stock < 30 días",    flagCol: "Stock < 30 días",          color: "var(--c-fresh)",   bg: "var(--c-fresh-bg)"   },
-  { key: "watch",   label: "30–90 días",         flagCol: "30 < Stock < 90 Días",     color: "var(--c-watch)",   bg: "var(--c-watch-bg)"   },
-  { key: "crit",    label: "Stock > 90 días",    flagCol: "Stock > 90 Días",          color: "var(--c-crit)",    bg: "var(--c-crit-bg)"    },
-  { key: "closed",  label: "Despachado Pendiente de Facturación", flagCol: null,        color: "var(--c-closed)",  bg: "var(--c-closed-bg)"  },
+  { key: "transit", label: "En tránsito",       flagCol: "En tránsito",              color: "var(--c-transit)", bg: "var(--c-transit-bg)", hex: "2E7FD1", hexBg: "EAF2FB" },
+  { key: "fresh",   label: "Stock < 30 días",    flagCol: "Stock < 30 días",          color: "var(--c-fresh)",   bg: "var(--c-fresh-bg)",   hex: "1E9E63", hexBg: "E9F7F0" },
+  { key: "watch",   label: "30–90 días",         flagCol: "30 < Stock < 90 Días",     color: "var(--c-watch)",   bg: "var(--c-watch-bg)",   hex: "C08A1A", hexBg: "FBF3E2" },
+  { key: "crit",    label: "Stock > 90 días",    flagCol: "Stock > 90 Días",          color: "var(--c-crit)",    bg: "var(--c-crit-bg)",    hex: "D14B3B", hexBg: "FBEAE8" },
+  { key: "closed",  label: "Despachado Pendiente de Facturación", flagCol: null,        color: "var(--c-closed)",  bg: "var(--c-closed-bg)",  hex: "64708A", hexBg: "EEF0F4" },
 ];
 
 let RAW_ROWS = [];
 let VIEW_ROWS = [];
+let SORTED_VIEW_ROWS = [];
 let ACTIVE_CATEGORY = null;
 let SORT = { col: "dias", dir: "desc" };
 
@@ -805,8 +834,11 @@ function renderTable(rows) {
   if (sorted.length === 0) {
     body.innerHTML = `<tr><td colspan="${COLUMNS.length}"><div class="empty-state">Sin resultados para los filtros aplicados.</div></td></tr>`;
     countEl.textContent = "";
+    SORTED_VIEW_ROWS = [];
     return;
   }
+
+  SORTED_VIEW_ROWS = sorted;
 
   body.innerHTML = sorted.map(r => {
     const cat = catInfo(r.category);
@@ -839,6 +871,177 @@ function applyFilters() {
   document.querySelectorAll(".kpi").forEach((el, i) => {
     el.classList.toggle("active", ACTIVE_CATEGORY === CATEGORIES[i].key);
   });
+  updateExportButton(filtered.length);
+}
+
+function updateExportButton(count) {
+  const btn = document.getElementById("export-btn");
+  const label = document.getElementById("export-label");
+  const groupText = ACTIVE_CATEGORY ? catInfo(ACTIVE_CATEGORY).label : "todos los grupos";
+  label.textContent = `Exportar a Excel (${count})`;
+  btn.title = `Exporta el detalle filtrado: ${groupText}`;
+  btn.disabled = count === 0;
+}
+
+async function exportToExcel() {
+  if (!SORTED_VIEW_ROWS.length) return;
+
+  const groupLabel = ACTIVE_CATEGORY ? catInfo(ACTIVE_CATEGORY).label : "Todos los grupos";
+  const fileTag = (ACTIVE_CATEGORY ? catInfo(ACTIVE_CATEGORY).label : "Todos_los_grupos")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w]+/g, "_").replace(/^_+|_+$/g, "");
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const filename = `OV_Stock_${fileTag}_${dateStr}.xlsx`;
+
+  if (typeof ExcelJS === "undefined") {
+    exportToExcelPlain(filename);
+    return;
+  }
+
+  const btn = document.getElementById("export-btn");
+  const label = document.getElementById("export-label");
+  const prevLabel = label.textContent;
+  btn.disabled = true;
+  label.textContent = "Generando…";
+
+  try {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "Koslan — Dashboard Aging de Stock";
+    workbook.created = new Date();
+
+    const sheetName = groupLabel.replace(/[\\/?*[\]:]/g, "").slice(0, 31) || "Detalle";
+    const sheet = workbook.addWorksheet(sheetName, {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
+
+    const columns = [
+      { header: "Estado", key: "estado", width: 28 },
+      { header: "OV", key: "ov", width: 12 },
+      { header: "Vendedor", key: "vendedor", width: 10 },
+      { header: "OC", key: "oc", width: 12 },
+      { header: "Artículo", key: "articulo", width: 14 },
+      { header: "Descripción", key: "descripcion", width: 42 },
+      { header: "Proveedor", key: "proveedor", width: 26 },
+      { header: "Cliente", key: "cliente", width: 26 },
+      { header: "Vía Embarque", key: "via", width: 12 },
+      { header: "Stock", key: "stock", width: 9 },
+      { header: "Cant_Lib", key: "cantLib", width: 9 },
+      { header: "Días en stock", key: "dias", width: 12 },
+      { header: "Moneda", key: "moneda", width: 8 },
+      { header: "Costo Compras", key: "costo", width: 14 },
+      { header: "Comentario", key: "comentario", width: 34 },
+    ];
+    sheet.columns = columns;
+
+    SORTED_VIEW_ROWS.forEach(r => {
+      sheet.addRow({
+        estado: catInfo(r.category).label,
+        ov: r.ov || "",
+        vendedor: r.vendedor || "",
+        oc: r.oc || "",
+        articulo: r.articulo || "",
+        descripcion: r.descripcion || "",
+        proveedor: r.proveedor || "",
+        cliente: r.cliente || "",
+        via: r.via || "",
+        stock: r.stock,
+        cantLib: r.cantLib,
+        dias: r.dias,
+        moneda: r.moneda || "",
+        costo: r.costo,
+        comentario: r.comentario || "",
+      });
+    });
+
+    // Encabezado: estilo similar al header de la tabla del dashboard
+    const headerRow = sheet.getRow(1);
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true, size: 10, color: { argb: "FF5B6479" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4F6FA" } };
+      cell.alignment = { vertical: "middle" };
+      cell.border = { bottom: { style: "thin", color: { argb: "FFE1E5EF" } } };
+    });
+    headerRow.height = 20;
+
+    // Filas: badge de color por categoría + bordes suaves, igual que en el dashboard
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const dataIndex = rowNumber - 2;
+      const r = SORTED_VIEW_ROWS[dataIndex];
+      const cat = catInfo(r.category);
+
+      const estadoCell = row.getCell(1);
+      estadoCell.font = { bold: true, size: 10, color: { argb: "FF" + cat.hex } };
+      estadoCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + cat.hexBg } };
+
+      const diasCell = row.getCell(12);
+      diasCell.font = { bold: true, color: { argb: "FF" + cat.hex } };
+
+      row.eachCell({ includeEmpty: true }, cell => {
+        cell.border = { bottom: { style: "thin", color: { argb: "FFEDF0F6" } } };
+        cell.alignment = { vertical: "middle", wrapText: false };
+      });
+
+      row.getCell(10).numFmt = "#,##0";
+      row.getCell(11).numFmt = "#,##0";
+      row.getCell(12).numFmt = "#,##0";
+      row.getCell(14).numFmt = "#,##0.00";
+    });
+
+    sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: columns.length } };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    exportToExcelPlain(filename);
+  } finally {
+    btn.disabled = SORTED_VIEW_ROWS.length === 0;
+    label.textContent = prevLabel;
+  }
+}
+
+// Respaldo sin color, por si ExcelJS no llega a cargar (ej. sin conexión al CDN)
+function exportToExcelPlain(filename) {
+  if (typeof XLSX === "undefined" || !SORTED_VIEW_ROWS.length) return;
+
+  const data = SORTED_VIEW_ROWS.map(r => ({
+    "Estado": catInfo(r.category).label,
+    "OV": r.ov || "",
+    "Vendedor": r.vendedor || "",
+    "OC": r.oc || "",
+    "Artículo": r.articulo || "",
+    "Descripción": r.descripcion || "",
+    "Proveedor": r.proveedor || "",
+    "Cliente": r.cliente || "",
+    "Vía Embarque": r.via || "",
+    "Stock": r.stock,
+    "Cant_Lib": r.cantLib,
+    "Días en stock": r.dias,
+    "Moneda": r.moneda || "",
+    "Costo Compras": r.costo,
+    "Comentario": r.comentario || "",
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws["!cols"] = [
+    { wch: 26 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 14 },
+    { wch: 40 }, { wch: 24 }, { wch: 24 }, { wch: 10 }, { wch: 9 },
+    { wch: 9 }, { wch: 10 }, { wch: 8 }, { wch: 13 }, { wch: 30 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const groupLabel = ACTIVE_CATEGORY ? catInfo(ACTIVE_CATEGORY).label : "Detalle general";
+  const sheetName = groupLabel.replace(/[\\/?*[\]:]/g, "").slice(0, 31) || "Detalle";
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, filename);
 }
 
 function clearFilters() {
