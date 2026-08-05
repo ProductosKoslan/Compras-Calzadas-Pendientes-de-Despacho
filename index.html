@@ -521,7 +521,7 @@ footer a{ color:var(--ink-faint); }
 
   <div class="detail-section" id="detail-section" style="display:none;">
     <section class="controls">
-      <input id="search" type="text" placeholder="Buscar por OV, OC, artículo, descripción, cliente o proveedor…" oninput="applyFilters()">
+      <input id="search" type="text" placeholder="Buscar por OV, OC, artículo, descripción, cliente, proveedor o comentario…" oninput="applyFilters()">
       <select id="vendedor-filter" onchange="applyFilters()"><option value="">Todos los vendedores</option></select>
       <select id="proveedor-filter" onchange="applyFilters()"><option value="">Todos los proveedores</option></select>
       <span id="clear-filters" onclick="clearFilters()">Limpiar filtros</span>
@@ -888,7 +888,7 @@ function getFilteredRows() {
     if (vend && r.vendedor !== vend) return false;
     if (prov && r.proveedor !== prov) return false;
     if (q) {
-      const hay = [r.ov, r.oc, r.articulo, r.descripcion, r.cliente, r.proveedor, r.vendedor]
+      const hay = [r.ov, r.oc, r.articulo, r.descripcion, r.cliente, r.proveedor, r.vendedor, r.comentario]
         .join(" ").toLowerCase();
       if (!hay.includes(q)) return false;
     }
