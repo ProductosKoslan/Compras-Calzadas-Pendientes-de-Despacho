@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aging de Stock — OV sin Despacho</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -38,7 +36,7 @@
 body{
   background: var(--bg);
   color: var(--ink);
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: Arial, sans-serif;
   min-height: 100vh;
   padding: 28px 20px 60px;
 }
@@ -58,7 +56,7 @@ header{
   position:relative;
 }
 .eyebrow{
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:11px;
   letter-spacing:0.16em;
   text-transform:uppercase;
@@ -76,7 +74,7 @@ header{
 }
 .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--c-transit); box-shadow:0 0 8px var(--c-transit); }
 h1{
-  font-family:'Space Grotesk', sans-serif;
+  font-family:Arial, sans-serif;
   font-weight:700;
   font-size: clamp(22px, 5vw, 34px);
   letter-spacing:-0.01em;
@@ -84,10 +82,10 @@ h1{
 }
 .subtitle{ color:var(--ink-dim); font-size:13.5px; margin-top:8px; max-width:560px; line-height:1.5;}
 .header-right{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
-.status-line{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-faint); text-align:right; }
+.status-line{ font-family:Arial, sans-serif; font-size:11.5px; color:var(--ink-faint); text-align:right; }
 .status-line b{ color:var(--ink-dim); font-weight:500;}
 .update-date-line{
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:11.5px;
   color:var(--ink-dim);
   text-align:right;
@@ -140,10 +138,10 @@ h1{
 }
 .kpi:hover .kpi-ring{ box-shadow:0 10px 24px -8px rgba(22,27,44,0.22); }
 .kpi.active .kpi-ring{ border-width:6px; box-shadow:0 0 0 5px var(--kc-bg); }
-.kpi-count{ font-family:'Space Grotesk', sans-serif; font-size:36px; font-weight:700; line-height:1; color:var(--ink);}
-.kpi-count-label{ font-family:'IBM Plex Mono', monospace; font-size:9px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); margin-top:2px; margin-bottom:9px;}
+.kpi-count{ font-family:Arial, sans-serif; font-size:36px; font-weight:700; line-height:1; color:var(--ink);}
+.kpi-count-label{ font-family:Arial, sans-serif; font-size:9px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); margin-top:2px; margin-bottom:9px;}
 .kpi-label{
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:10px;
   letter-spacing:0.02em;
   text-transform:uppercase;
@@ -154,7 +152,7 @@ h1{
   margin-bottom:7px;
 }
 .kpi-sub{ font-size:10.5px; color:var(--ink-dim); display:flex; flex-direction:column; gap:2px; align-items:center;}
-.kpi-sub .curr{ font-family:'IBM Plex Mono', monospace; font-size:10px; }
+.kpi-sub .curr{ font-family:Arial, sans-serif; font-size:10px; }
 @media (max-width: 1000px){ .kpi-ring{ width:190px; height:190px; } }
 @media (max-width: 560px){ .kpi-ring{ width:210px; height:210px; } }
 
@@ -168,7 +166,7 @@ h1{
   box-shadow:0 1px 3px rgba(22,27,44,0.04);
 }
 .aging-title{
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:11px;
   letter-spacing:0.1em;
   text-transform:uppercase;
@@ -189,7 +187,7 @@ h1{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:11px;
   font-weight:600;
   color:#0A0E17;
@@ -222,7 +220,7 @@ h1{
   color:var(--ink);
   padding:10px 14px;
   border-radius:7px;
-  font-family:'IBM Plex Sans', sans-serif;
+  font-family:Arial, sans-serif;
   font-size:13.5px;
 }
 #search::placeholder{ color:var(--ink-faint); }
@@ -233,11 +231,11 @@ select{
   color:var(--ink);
   padding:10px 12px;
   border-radius:7px;
-  font-family:'IBM Plex Sans', sans-serif;
+  font-family:Arial, sans-serif;
   font-size:13px;
 }
 .chip{
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:11px;
   padding:6px 10px;
   border-radius:20px;
@@ -251,7 +249,7 @@ select{
 #clear-filters{ font-size:11.5px; color:var(--ink-faint); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
 
 #export-btn{
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:11.5px;
   letter-spacing:0.03em;
   background:var(--c-fresh-bg);
@@ -283,7 +281,7 @@ select{
 table{ width:100%; border-collapse:collapse; min-width:1100px; }
 thead th{
   text-align:left;
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:10.5px;
   letter-spacing:0.06em;
   text-transform:uppercase;
@@ -306,13 +304,13 @@ tbody td{
 }
 tbody tr:hover{ background:var(--panel-2); }
 tbody tr:last-child td{ border-bottom:none; }
-.mono{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-dim); }
+.mono{ font-family:Arial, sans-serif; font-size:12px; color:var(--ink-dim); }
 .desc-cell{ white-space:normal; max-width:260px; min-width:180px; color:var(--ink-dim); font-size:12px; line-height:1.35;}
 .badge{
   display:inline-flex;
   align-items:center;
   gap:6px;
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:10.5px;
   padding:4px 9px;
   border-radius:20px;
@@ -320,9 +318,9 @@ tbody tr:last-child td{ border-bottom:none; }
   white-space:nowrap;
 }
 .badge .dot{ width:6px; height:6px; border-radius:50%; }
-.dias-cell{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+.dias-cell{ font-family:Arial, sans-serif; font-weight:600; }
 .empty-state{ padding:60px 20px; text-align:center; color:var(--ink-faint); font-size:13px; }
-.row-count{ padding:12px 16px; font-size:11.5px; color:var(--ink-faint); font-family:'IBM Plex Mono', monospace; border-top:1px solid var(--line); }
+.row-count{ padding:12px 16px; font-size:11.5px; color:var(--ink-faint); font-family:Arial, sans-serif; border-top:1px solid var(--line); }
 
 /* ---------- Ranking ---------- */
 .ranking-panel{
@@ -330,11 +328,10 @@ tbody tr:last-child td{ border-bottom:none; }
   border:1px solid var(--line);
   border-radius:10px;
   padding:20px 22px 10px;
-  margin-top:20px;
+  margin-top:16px;
   box-shadow:0 1px 3px rgba(22,27,44,0.04);
 }
-.ranking-header{ margin-bottom:16px; }
-.ranking-subtitle{ font-size:12px; color:var(--ink-dim); margin-top:4px; max-width:640px; line-height:1.5; }
+.ranking-subtitle{ font-size:12px; color:var(--ink-dim); margin-top:4px; margin-bottom:16px; max-width:640px; line-height:1.5; }
 .rank-row{
   display:grid;
   grid-template-columns: 30px 108px 1fr 220px;
@@ -345,7 +342,7 @@ tbody tr:last-child td{ border-bottom:none; }
 }
 .rank-row:last-child{ border-bottom:none; }
 .rank-num{
-  font-family:'Space Grotesk', sans-serif;
+  font-family:Arial, sans-serif;
   font-weight:700;
   font-size:14px;
   color:var(--ink-faint);
@@ -373,7 +370,7 @@ tbody tr:last-child td{ border-bottom:none; }
   display:flex;
   align-items:center;
   gap:10px;
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:10.5px;
   color:var(--ink-faint);
 }
@@ -384,7 +381,7 @@ tbody tr:last-child td{ border-bottom:none; }
   gap:5px;
 }
 .rank-amount{
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-weight:700;
   font-size:13px;
 }
@@ -399,13 +396,39 @@ tbody tr:last-child td{ border-bottom:none; }
   .rank-meta{ display:none; }
 }
 
+/* ---------- Detail toggle ---------- */
+.detail-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px 18px;
+  margin-top:20px;
+  cursor:pointer;
+  font-family:Arial, sans-serif;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--ink);
+  letter-spacing:0.02em;
+  transition: background .15s, border-color .15s;
+}
+.detail-toggle:hover{ background:var(--panel-2); border-color:var(--c-transit); }
+.detail-toggle-left{ display:flex; align-items:center; gap:10px; }
+.detail-toggle svg{ width:15px; height:15px; color:var(--c-transit); transition: transform .2s; }
+.detail-toggle.open svg{ transform:rotate(90deg); }
+.detail-toggle-count{ color:var(--ink-faint); font-weight:500; }
+.detail-section{ margin-top:16px; }
+
 footer{
   margin-top:28px;
   padding-top:18px;
   border-top:1px solid var(--line);
   font-size:11px;
   color:var(--ink-faint);
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   display:flex;
   justify-content:space-between;
   flex-wrap:wrap;
@@ -421,7 +444,7 @@ footer a{ color:var(--ink-faint); }
 /* ---------- Mobile ---------- */
 .scroll-hint{
   display:none;
-  font-family:'IBM Plex Mono', monospace;
+  font-family:Arial, sans-serif;
   font-size:10.5px;
   color:var(--ink-faint);
   padding:9px 16px 0;
@@ -475,37 +498,52 @@ footer a{ color:var(--ink-faint); }
     <div class="aging-legend" id="aging-legend"></div>
   </section>
 
-  <section class="controls">
-    <input id="search" type="text" placeholder="Buscar por OV, OC, artículo, descripción, cliente o proveedor…" oninput="applyFilters()">
-    <select id="vendedor-filter" onchange="applyFilters()"><option value="">Todos los vendedores</option></select>
-    <select id="proveedor-filter" onchange="applyFilters()"><option value="">Todos los proveedores</option></select>
-    <span id="clear-filters" onclick="clearFilters()">Limpiar filtros</span>
-    <button id="export-btn" onclick="exportToExcel()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-      <span id="export-label">Exportar a Excel</span>
-    </button>
-  </section>
+  <button class="detail-toggle open" id="ranking-toggle" onclick="toggleRanking()">
+    <span class="detail-toggle-left">
+      <svg id="ranking-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+      <span>Ranking — Mayor monto en stock</span>
+    </span>
+    <span class="detail-toggle-count" id="ranking-toggle-count"></span>
+  </button>
 
-  <section class="table-panel">
-    <div class="scroll-hint">← Desliza para ver más columnas →</div>
-    <div class="table-scroll">
-      <table id="data-table">
-        <thead>
-          <tr id="table-head"></tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
-    <div class="row-count" id="row-count"></div>
-  </section>
-
-  <section class="ranking-panel">
-    <div class="ranking-header">
-      <div class="aging-title">Ranking — Mayor monto en stock</div>
-      <p class="ranking-subtitle">Líneas con stock físico en bodega (Stock &gt; 0), ordenadas por monto USD — lo más crítico en términos de capital inmovilizado.</p>
-    </div>
+  <div class="ranking-panel" id="ranking-panel">
+    <p class="ranking-subtitle">Líneas con stock físico en bodega (Stock &gt; 0), ordenadas por monto USD — lo más crítico en términos de capital inmovilizado.</p>
     <div id="ranking-list"></div>
-  </section>
+  </div>
+
+  <button class="detail-toggle" id="detail-toggle" onclick="toggleDetail()">
+    <span class="detail-toggle-left">
+      <svg id="detail-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+      <span>Ver detalle de líneas</span>
+    </span>
+    <span class="detail-toggle-count" id="detail-toggle-count"></span>
+  </button>
+
+  <div class="detail-section" id="detail-section" style="display:none;">
+    <section class="controls">
+      <input id="search" type="text" placeholder="Buscar por OV, OC, artículo, descripción, cliente o proveedor…" oninput="applyFilters()">
+      <select id="vendedor-filter" onchange="applyFilters()"><option value="">Todos los vendedores</option></select>
+      <select id="proveedor-filter" onchange="applyFilters()"><option value="">Todos los proveedores</option></select>
+      <span id="clear-filters" onclick="clearFilters()">Limpiar filtros</span>
+      <button id="export-btn" onclick="exportToExcel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <span id="export-label">Exportar a Excel</span>
+      </button>
+    </section>
+
+    <section class="table-panel">
+      <div class="scroll-hint">← Desliza para ver más columnas →</div>
+      <div class="table-scroll">
+        <table id="data-table">
+          <thead>
+            <tr id="table-head"></tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="row-count"></div>
+    </section>
+  </div>
 
   <footer>
     <span>Fuente: Google Sheets — Compras calzadas OV / PY sin despacho (OC Emb-Rec Auto)</span>
@@ -797,6 +835,7 @@ function renderKPIs(rows) {
     el.onclick = () => {
       ACTIVE_CATEGORY = ACTIVE_CATEGORY === cat.key ? null : cat.key;
       applyFilters();
+      if (ACTIVE_CATEGORY) openDetail();
     };
     el.innerHTML = `
       <div class="kpi-ring">
@@ -943,8 +982,11 @@ function renderTable(rows) {
 
 function renderRanking(rows) {
   const container = document.getElementById("ranking-list");
+  const countEl = document.getElementById("ranking-toggle-count");
   const withStock = rows.filter(r => r.stock > 0 && r.montoUSD > 0);
   const top = [...withStock].sort((a, b) => b.montoUSD - a.montoUSD).slice(0, 10);
+
+  if (countEl) countEl.textContent = top.length ? `Top ${top.length}` : "";
 
   if (top.length === 0) {
     container.innerHTML = `<div class="ranking-empty">No hay líneas con stock físico y monto registrado.</div>`;
@@ -976,6 +1018,31 @@ function renderRanking(rows) {
   }).join("");
 }
 
+function setDetailOpen(open) {
+  const section = document.getElementById("detail-section");
+  const toggle = document.getElementById("detail-toggle");
+  const label = toggle.querySelector(".detail-toggle-left span:last-child");
+  section.style.display = open ? "block" : "none";
+  toggle.classList.toggle("open", open);
+  label.textContent = open ? "Ocultar detalle de líneas" : "Ver detalle de líneas";
+}
+
+function openDetail() { setDetailOpen(true); }
+
+function toggleDetail() {
+  const section = document.getElementById("detail-section");
+  const isOpen = section.style.display !== "none";
+  setDetailOpen(!isOpen);
+}
+
+function toggleRanking() {
+  const panel = document.getElementById("ranking-panel");
+  const toggle = document.getElementById("ranking-toggle");
+  const isOpen = panel.style.display !== "none";
+  panel.style.display = isOpen ? "none" : "block";
+  toggle.classList.toggle("open", !isOpen);
+}
+
 function applyFilters() {
   const filtered = getFilteredRows();
   VIEW_ROWS = filtered;
@@ -987,6 +1054,13 @@ function applyFilters() {
     el.classList.toggle("active", ACTIVE_CATEGORY === CATEGORIES[i].key);
   });
   updateExportButton(filtered.length);
+
+  const countEl = document.getElementById("detail-toggle-count");
+  if (countEl) {
+    countEl.textContent = filtered.length === RAW_ROWS.length
+      ? `${RAW_ROWS.length} líneas`
+      : `${filtered.length} de ${RAW_ROWS.length} líneas`;
+  }
 }
 
 function updateExportButton(count) {
